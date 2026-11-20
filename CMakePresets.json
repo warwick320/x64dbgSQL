@@ -1,0 +1,25 @@
+{
+  "version": 6,
+  "configurePresets": [
+    {
+      "name": "windows-x64",
+      "generator": "Visual Studio 17 2022",
+      "architecture": "x64",
+      "binaryDir": "${sourceDir}/out/windows-x64"
+    },
+    {
+      "name": "windows-x86",
+      "generator": "Visual Studio 17 2022",
+      "architecture": "Win32",
+      "binaryDir": "${sourceDir}/out/windows-x86"
+    }
+  ],
+  "buildPresets": [
+    {"name": "windows-x64", "configurePreset": "windows-x64", "configuration": "Release"},
+    {"name": "windows-x86", "configurePreset": "windows-x86", "configuration": "Release"}
+  ],
+  "testPresets": [
+    {"name": "windows-x64", "configurePreset": "windows-x64", "configuration": "Release", "output": {"outputOnFailure": true}},
+    {"name": "windows-x86", "configurePreset": "windows-x86", "configuration": "Release", "output": {"outputOnFailure": true}}
+  ]
+}

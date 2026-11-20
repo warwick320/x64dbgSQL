@@ -1,0 +1,57 @@
+name: Windows integration
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build-test-package:
+    runs-on: windows-2022
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Build and test x64
+        run: |
+          cmake --preset windows-x64
+          if ($LASTEXITCODE) { exit $LASTEXITCODE }
+          cmake --build --preset windows-x64
+          if ($LASTEXITCODE) { exit $LASTEXITCODE }
+          ctest --preset windows-x64
+      - name: Build and test x86 using the x64 CLI
+        run: |
+          cmake --preset windows-x86
+          if ($LASTEXITCODE) { exit $LASTEXITCODE }
+          cmake --build --preset windows-x86
+          if ($LASTEXITCODE) { exit $LASTEXITCODE }
+          ctest --preset windows-x86
+      - name: Build release packages
+        run: |
+          $inno = Join-Path $env:RUNNER_TEMP 'Inno Setup'
+          $bootstrap = Join-Path $env:RUNNER_TEMP 'innosetup-6.7.3.exe'
+          Invoke-WebRequest 'https://github.com/jrsoftware/issrc/releases/download/is-6_7_3/innosetup-6.7.3.exe' -OutFile $bootstrap
+          if ((Get-FileHash $bootstrap -Algorithm SHA256).Hash -ne '9c73c3bae7ed48d44112a0f48e66742c00090bdb5bef71d9d3c056c66e97b732') {
+            throw 'Inno Setup download failed checksum verification'
+          }
+          $compilerInstall = Start-Process -FilePath $bootstrap -ArgumentList @(
+            '/CURRENTUSER', '/VERYSILENT', '/SUPPRESSMSGBOXES', '/NORESTART', ('/DIR="{0}"' -f $inno)
+          ) -WindowStyle Hidden -Wait -PassThru
+          if ($compilerInstall.ExitCode) { throw "Inno Setup installation failed with code $($compilerInstall.ExitCode)" }
+          ./cmake/PackageWindows.ps1 -InnoCompiler (Join-Path $inno 'ISCC.exe')
+      - name: Verify release archives and installer
+        run: |
+          python -B tests/release.py out/packages .deps/debugger/release out
+          if ($LASTEXITCODE) { exit $LASTEXITCODE }
+          python -B tests/installer.py out/packages/x64dbgsql-setup.exe .deps/debugger/release
+      - uses: actions/upload-artifact@v4
+        with:
+          name: x64dbgsql-windows
+          path: |
+            out/packages/*.zip
+            out/packages/x64dbgsql-setup.exe
+            out/packages/SHA256SUMS

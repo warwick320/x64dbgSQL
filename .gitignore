@@ -1,0 +1,26 @@
+/.deps/
+/out/
+/.vs/
+/build/
+/CMakeUserPresets.json
+__pycache__/
+*.py[cod]
+*.user
+*.log
+.env
+.env.*
+!.env.example
+
+# Local workspace files
+AGENT.md
+AGENTS.md
+CLAUDE.md
+GEMINI.md
+/.agents/
+/.claude/
+/.codex/
+/.cursor/
+/.github/copilot-instructions.md
+/.github/instructions/
+/PLAN.ko.md
+/benchmarks/tokens.py
